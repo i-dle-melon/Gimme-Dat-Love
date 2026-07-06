@@ -76,10 +76,9 @@
         }
         /* 新增：歌曲封面圖片樣式 (長寬體、不切割) */
         .song-cover {
-            width: auto;
-            height: 10%;
-            max-height: 100px;
-            min-height: 30px;
+            width: 70%;
+            max-width: 500px;
+            min-width: 100px;
             object-fit: contain;     /* 保持長寬比例，不切割圖片 */
             border-radius: 6px;      /* 精緻微圓角 */
             background-color: #2a2a2a; /* 圖片載入前或比例不符時的襯底背景 */
@@ -307,7 +306,7 @@
 <script>
 // ================= 配置區 =================
 // 請貼上你從 Google 試算表發布的 CSV 網址
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcKEulpVExKvh0cwgz21GOK5onAwclPzQlq_nfb_W8-NnwixccEEKgeGcMXQlMAXjYmbw53-fB_usI/pub?gid=1703196335&single=true&output=csv";
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTb1GmB0Thjg3ADQUJs06ltMkhkMI-tUI76U9pIrq5mrPpDExBGnMMFy5nIZsfdPzZXkVaeA9p3D_M2/pub?gid=1813146225&single=true&output=csv";
 // ==========================================
 
 const ctx = document.getElementById('trendChart').getContext('2d');
@@ -760,6 +759,39 @@ function checkOrientation() {
 window.addEventListener('DOMContentLoaded', checkOrientation);
 // 手機轉向或視窗大小改變時，即時再次檢查
 window.addEventListener('resize', checkOrientation);
+</script>
+
+<div style="text-align: center; color: #888888; font-size: 14px; margin-top: 20px;">
+    <p>總次數：<span id="view-count" style="color: #00e676; font-weight: bold;">載入中...</span> 次瀏覽</p>
+</div>
+
+<script>
+  // 替換成你部署後的 Cloudflare Workers 網址
+  const workerUrl = 'https://wispy-wind-f5df.1fangwh.workers.dev/?page=gimme_dat_love'; 
+    
+// 檢查這一個分頁是否已經算過瀏覽量
+if (!sessionStorage.getItem('has_voted')) {
+  // 1. 如果是第一次進來，呼叫 API（這會讓 KV 資料庫 +1）
+  fetch(workerUrl)
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('view-count').innerText = data.views;
+      // 標記這個分頁已經算過次數了
+      sessionStorage.setItem('has_voted', 'true');
+      // 把當前的數字也存起來，方便重整時使用
+      sessionStorage.setItem('current_views', data.views);
+    })
+    .catch(error => {
+      console.error('計數器載入失敗:', error);
+      document.getElementById('view-count').innerText = '0';
+    });
+} else {
+  // 2. 如果是重新整理（已經有標記了），就直接抓最新數字，但不讓資料庫 +1
+  // 提示：為了不讓資料庫增加，我們可以另外在 Worker 寫一個不加次數的邏輯，
+  // 或者是直接顯示剛剛存下來的數字：
+  const savedViews = sessionStorage.getItem('current_views');
+  document.getElementById('view-count').innerText = savedViews ? savedViews : '---';
+}
 
 </script>
 </body>
